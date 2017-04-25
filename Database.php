@@ -13,7 +13,8 @@ class Database
 
     private function __construct() {}
 
-    private static function getConnexion(){
+    private static function get(){
+        if (!is_null(self::$_pdo)) return self::$_pdo;
         try
         {
             $pdo = new PDO('mysql:dbname='.DB.';host='.HOST, USER, PW);
@@ -32,8 +33,6 @@ class Database
     }
 
     public static function query($statement, $class){
-        if (is_null(self::$_pdo)) self::getConnexion();
-
         $q = self::$_pdo->query($statement);
         $res = $q->fetchAll(PDO::FETCH_CLASS, $class);
 
@@ -41,15 +40,11 @@ class Database
     }
 
     public static function exec($statement){
-        if (is_null(self::$_pdo)) self::getConnexion();
-
-        return self::$_pdo->exec($statement);
+        return self::get()->exec($statement);
     }
 
     public static function insert($table,$field,$value){
-        if (is_null(self::$_pdo)) self::getConnexion();
-
-        $q = self::$_pdo->exec(
+        $q = self::get()->exec(
             'INSERT INTO '. $table .'
              ('. $field .')
              VALUES ('. $value .')'
@@ -59,8 +54,6 @@ class Database
     }
 
     public static function update($table,$field,$value,$byField,$key){
-        if (is_null(self::$_pdo)) self::getConnexion();
-
         $f = explode(",",$field);
         $v = explode(",",$value);
 
@@ -70,7 +63,7 @@ class Database
             if ($i == (count($f) -1)) $set = substr($set, 0, strlen($set) - 2);
         }
 
-        $q = self::$_pdo->exec(
+        $q = self::get()->exec(
             'UPDATE '. $table .' 
             SET '. $set .' 
             WHERE '. $byField .' = '.$key
@@ -80,9 +73,7 @@ class Database
     }
 
     public static function delete($table,$byField,$key){
-        if (is_null(self::$_pdo)) self::getConnexion();
-
-        $q = self::$_pdo->exec(
+        $q = self::get()->exec(
             'DELETE FROM '. $table .' 
             WHERE '. $byField .' = '. $key
         );
