@@ -33,7 +33,7 @@ class Database
     }
 
     public static function query($statement, $class){
-        $q = self::$_pdo->query($statement);
+        $q = self::get()->query($statement);
         $res = $q->fetchAll(PDO::FETCH_CLASS, $class);
 
         return $res;
