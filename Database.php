@@ -28,56 +28,54 @@ class Database
 
         self::$_pdo->exec('SET NAMES \'utf8\'');
         self::$_pdo->query('SET NAMES \'utf8\'');
+        self::$_pdo->prepare('SET NAMES \'utf8\'');
 
         return self::$_pdo;
     }
 
-    public static function query($statement, $class){
-        $q = self::get()->query($statement);
-        $res = $q->fetchAll(PDO::FETCH_CLASS, $class);
+    /**
+     * @param $statement string
+     * @param $params array
+     * @return array
+     */
+    public static function query($statement,$params){
+        $q = self::get()->prepare($statement);
+        $q->execute($params);
+        $res = $q->fetchAll(PDO::FETCH_OBJ);
 
         return $res;
     }
 
-    public static function exec($statement){
-        return self::get()->exec($statement);
+    /**
+     * @param $statement string
+     * @param $params array
+     * @return int
+     */
+    public static function exec($statement,$params){
+        $q = self::get()->prepare($statement);
+
+        return $q->execute($params);
     }
 
-    public static function insert($table,$field,$value){
-        $q = self::get()->exec(
-            'INSERT INTO '. $table .'
-             ('. $field .')
-             VALUES ('. $value .')'
-        );
+    /**
+     * @param $id int
+     * @param $table string
+     * @return array
+     */
+    public static function getById($id,$table)
+    {
+        $q = self::get()->prepare('SELECT * FROM '. $table .' WHERE id = :id');
+        $q->execute([':id' => $id]);
+        $res = $q->fetchAll(PDO::FETCH_OBJ);
 
-        return $q;
+        return $res;
     }
 
-    public static function update($table,$field,$value,$byField,$key){
-        $f = explode(",",$field);
-        $v = explode(",",$value);
-
-        $set = '';
-        for ($i = 0;$i < count($f);$i++){
-            $set .= $f[$i] .' = '. $v[$i] .', ';
-            if ($i == (count($f) -1)) $set = substr($set, 0, strlen($set) - 2);
-        }
-
-        $q = self::get()->exec(
-            'UPDATE '. $table .' 
-            SET '. $set .' 
-            WHERE '. $byField .' = '.$key
-        );
-
-        return $q;
-    }
-
-    public static function delete($table,$byField,$key){
-        $q = self::get()->exec(
-            'DELETE FROM '. $table .' 
-            WHERE '. $byField .' = '. $key
-        );
-
-        return $q;
+    /**
+     * @return int
+     */
+    public static function lastId()
+    {
+        return self::$_pdo->lastInsertId();
     }
 }
